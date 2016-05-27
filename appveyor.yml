@@ -1,0 +1,9 @@
+install:
+  - choco install gitversion.portable -pre -y
+before_build:
+  - nuget restore -PackagesDirectory .\packages
+  - ps: gitversion /l console /output buildserver
+cache:
+  - packages -> packages.config
+artifacts:
+  - path: 'bin\**\*.nupkg'
