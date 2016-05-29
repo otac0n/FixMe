@@ -1,5 +1,88 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Target Name="FixMe" BeforeTargets="CoreCompile">
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="FixMe" BeforeTargets="BeforeBuild">
+    <ItemGroup Condition=" '@(FixMeTokens)' == '' ">
+      <FixMeTokens Include="BUG;FIXME;HACK;UNDONE;NOTE;OPTIMIZE;TODO;XXX;UnresolvedMergeConflict" />
+    </ItemGroup>
+    <ItemGroup>
+      <FixMeItemNames Include="@(AvailableItemName)" />
+      <FixMeItemNames Include="ApplicationDefinition;AdditionalFiles;Compile;Content;DesignData;DesignDataWithDesignTimeCreatableTypes;EmbeddedResource;EntityDeploy;None;Page;Resource;SplashScreen" />
+    </ItemGroup>
+    <ItemGroup>
+      <FixMeFiles Include="@(%(FixMeItemNames.Identity))" Exclude="$(FixMeExclude)" />
+    </ItemGroup>
+    <TokenSearch Files="@(FixMeFiles)" Tokens="@(FixMeTokens)" />
   </Target>
+  <UsingTask TaskName="TokenSearch" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v12.0.dll">
+    <ParameterGroup>
+      <Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <Tokens ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code Type="Fragment" Language="cs">
+<![CDATA[
+var regexBuilder = new StringBuilder();
+foreach (var token in Tokens)
+{
+    if (regexBuilder.Length > 0)
+    {
+        regexBuilder.Append("|");
+    }
+
+    regexBuilder.Append(Regex.Escape(token.ItemSpec));
+}
+
+var tokensRegex = new Regex(regexBuilder.ToString(), RegexOptions.Compiled);
+
+foreach (var file in Files)
+{
+    var fileName = file.ItemSpec;
+
+    if (!File.Exists(fileName))
+    {
+        Log.LogMessage(MessageImportance.Normal, "Skipping '{0}' because it was not found.", fileName);
+        continue;
+    }
+
+    using (var fileStream = File.OpenRead(fileName))
+    {
+        var isBinary = false;
+        var header = new byte[1024];
+        var read = fileStream.Read(header, 0, header.Length);
+        for (var i = 0; i < read; i++)
+        {
+            if (header[i] == 0)
+            {
+                isBinary = true;
+                break;
+            }
+        }
+
+        if (isBinary)
+        {
+            Log.LogMessage(MessageImportance.Normal, "Skipping '{0}' because it appears to be a binary file.", fileName);
+            continue;
+        }
+
+        fileStream.Seek(0, SeekOrigin.Begin);
+        using (var reader = new StreamReader(fileStream))
+        {
+            var lineNumber = 0;
+            string line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                lineNumber++;
+                foreach (Match match in tokensRegex.Matches(line))
+                {
+                    Log.LogWarning(null, null, null, fileName, lineNumber, match.Index + 1, lineNumber, match.Index + match.Length + 1, "Found '{0}'.", match.Value);
+                }
+            }
+        }
+    }
+}
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
 </Project>
