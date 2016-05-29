@@ -19,6 +19,7 @@
       <Tokens ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
     </ParameterGroup>
     <Task>
+      <Using Namespace="System.Linq" />
       <Using Namespace="System.Text.RegularExpressions" />
       <Code Type="Fragment" Language="cs">
 <![CDATA[
@@ -34,6 +35,11 @@ foreach (var token in Tokens)
 }
 
 var tokensRegex = new Regex(regexBuilder.ToString(), RegexOptions.Compiled);
+var singleLineCommentRegex = new Regex(@"(?://|--|#|'|REM|::)\s*$", RegexOptions.Compiled);
+var multiLineCommentStartRegex = new Regex(@"(/\*|<#|<!--)\s*$", RegexOptions.Compiled);
+var stringStartRegex = new Regex(@"(@?"")\s*$", RegexOptions.Compiled);
+var extractCharsVerbatimRegex = new Regex(@"((?<char>[^""])|""(?<char>""))*", RegexOptions.Compiled);
+var extractCharsEscapedRegex = new Regex(@"((?<char>[^\\""])|\\(?<char>[""'])|(?<char>\\.))*", RegexOptions.Compiled);
 
 foreach (var file in Files)
 {
@@ -75,7 +81,77 @@ foreach (var file in Files)
                 lineNumber++;
                 foreach (Match match in tokensRegex.Matches(line))
                 {
-                    Log.LogWarning(null, null, null, fileName, lineNumber, match.Index + 1, lineNumber, match.Index + match.Length + 1, "Found '{0}'.", match.Value);
+                    var startColumn = match.Index + 1;
+                    var endColumn = startColumn + match.Length;
+                    var tokenEndIndex = match.Index + match.Length;
+
+                    var token = match.Value;
+                    string message = null;
+
+                    var prefix = line.Substring(0, match.Index);
+                    if (singleLineCommentRegex.IsMatch(prefix))
+                    {
+                        message = line.Substring(tokenEndIndex);
+                    }
+                    else
+                    {
+                        var multiLineCommentStartMatch = multiLineCommentStartRegex.Match(prefix);
+                        if (multiLineCommentStartMatch.Success)
+                        {
+                            string terminator = null;
+                            switch (multiLineCommentStartMatch.Groups[1].Value)
+                            {
+                                case "/*":
+                                    terminator = "*/";
+                                    break;
+                                case "<#":
+                                    terminator = "#>";
+                                    break;
+                                case "<!--":
+                                    terminator = "-->";
+                                    break;
+                            }
+
+                            var terminatorIndex = line.IndexOf(terminator, tokenEndIndex);
+                            if (terminatorIndex == -1)
+                            {
+                                message = line.Substring(tokenEndIndex);
+                            }
+                            else
+                            {
+                                message = line.Substring(tokenEndIndex, terminatorIndex - tokenEndIndex);
+                            }
+                        }
+                        else
+                        {
+                            var stringStartMatch = stringStartRegex.Match(prefix);
+                            if (stringStartMatch.Success)
+                            {
+                                Regex extractRegex = null;
+                                switch (stringStartMatch.Groups[1].Value)
+                                {
+                                    case @"@""":
+                                        extractRegex = extractCharsVerbatimRegex;
+                                        break;
+                                    case @"""":
+                                        extractRegex = extractCharsEscapedRegex;
+                                        break;
+                                }
+
+                                message = string.Concat(extractRegex.Match(line.Substring(tokenEndIndex)).Groups["char"].Captures.Cast<Capture>());
+                            }
+                        }
+                    }
+
+                    if (string.IsNullOrWhiteSpace(message))
+                    {
+                        Log.LogWarning(null, null, null, fileName, lineNumber, startColumn, lineNumber, endColumn, "Found '{0}'", token);
+                    }
+                    else
+                    {
+                        message = message.TrimStart(": ".ToCharArray()).TrimEnd();
+                        Log.LogWarning(null, null, null, fileName, lineNumber, startColumn, lineNumber, endColumn, "Found '{0}': {1}", token, message);
+                    }
                 }
             }
         }
