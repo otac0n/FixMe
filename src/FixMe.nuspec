@@ -11,6 +11,7 @@
     <tags>build todo fixme warn bug xxx</tags>
     <licenseUrl>https://raw.github.com/otac0n/FixMe/master/license.md</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <developmentDependency>true</developmentDependency>
   </metadata>
   <files>
     <file src="**\*.*" />
