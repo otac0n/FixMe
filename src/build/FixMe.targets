@@ -35,7 +35,7 @@ foreach (var token in Tokens)
 }
 
 var tokensRegex = new Regex(regexBuilder.ToString(), RegexOptions.Compiled);
-var singleLineCommentRegex = new Regex(@"(?://|--|#|'|REM|::)\s*$", RegexOptions.Compiled);
+var singleLineCommentRegex = new Regex(@"(?://+|--+|#|'|REM|::)\s*$", RegexOptions.Compiled);
 var multiLineCommentStartRegex = new Regex(@"(/\*+|<#|<!--+|@\*+)\s*$", RegexOptions.Compiled);
 var stringStartRegex = new Regex(@"(@?"")\s*$", RegexOptions.Compiled);
 var extractCharsVerbatimRegex = new Regex(@"((?<char>[^""])|""(?<char>""))*", RegexOptions.Compiled);
