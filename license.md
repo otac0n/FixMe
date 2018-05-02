@@ -1,7 +1,4 @@
-The MIT License
-===============
-
-Copyright © 2016 John Gietzen
+Copyright © 2018 John Gietzen
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

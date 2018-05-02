@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\SharedAssemblyInfo.props" />
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <CodeAnalysisRuleSet>FixMe.ruleset</CodeAnalysisRuleSet>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <Description>A utility to emit MSBuild warnings for FIXME-style comments.</Description>
+    <PackageLicenseUrl>https://raw.github.com/otac0n/FixMe/master/license.md</PackageLicenseUrl>
+    <PackageTags>build;todo;fixme;warn;bug;xxx</PackageTags>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <MinClientVersion>2.5</MinClientVersion>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <TargetFrameworks>net40;netstandard2.0</TargetFrameworks>
+    <PackageProjectUrl>https://github.com/otac0n/FixMe</PackageProjectUrl>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="FixMe.targets" PackagePath="build\" />
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
+    <AdditionalFiles Include="FixMe.ruleset" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="GitVersionTask" Version="4.0.0-beta0012" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.6.0" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.0-beta006" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+    <Reference Include="Microsoft.Build.Framework" />
+    <Reference Include="Microsoft.Build.Utilities.v4.0" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="15.6.85" />
+    <PackageReference Include="System.CodeDom" Version="4.4.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="@(PackageReference)" PrivateAssets="All" />
+  </ItemGroup>
+  <Target Name="ExcludeReferences" BeforeTargets="GenerateNuspec">
+    <ItemGroup>
+      <_FrameworkAssemblyReferences Remove="@(_FrameworkAssemblyReferences)" />
+    </ItemGroup>
+  </Target>
+  <Target Name="UpdatePackageOutput" BeforeTargets="_GetPackageFiles">
+    <Copy SourceFiles="$(SolutionDir)readme.md" DestinationFiles="$(OutputPath)readme.txt" SkipUnchangedFiles="true" />
+    <ItemGroup>
+      <Content Include="$(OutputPath)readme.txt">
+        <Pack>true</Pack>
+        <PackagePath />
+      </Content>
+      <Content Include="$(OutputPath)**\*.dll;$(OutputPath)**\*.exe;$(OutputPath)**\*.config;$(OutputPath)**\*.json;$(OutputPath)**\*.xml" Exclude="$(OutputPath)**\Microsoft.Build.*">
+        <Pack>true</Pack>
+        <PackagePath>build\</PackagePath>
+      </Content>
+    </ItemGroup>
+  </Target>
+</Project>
