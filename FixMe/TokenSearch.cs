@@ -97,55 +97,55 @@ namespace FixMe
                                 string message = null;
 
                                 var prefix = line.Substring(0, match.Index);
-                                foreach (Match singleLineMatch in singleLineCommentRegex.Matches(prefix))
+
+                                foreach (Match multiLineMatch in multiLineCommentStartRegex.Matches(prefix))
                                 {
-                                    if (string.IsNullOrWhiteSpace(prefix.Substring(singleLineMatch.Index + singleLineMatch.Length)))
+                                    if (string.IsNullOrWhiteSpace(prefix.Substring(multiLineMatch.Index + multiLineMatch.Length)))
                                     {
-                                        found = true;
-                                        message = line.Substring(tokenEndIndex);
-                                        break;
+                                        var start = multiLineMatch.Groups[1].Value;
+                                        string terminator = null;
+                                        if (start.StartsWith("/*", StringComparison.Ordinal))
+                                        {
+                                            terminator = "*/";
+                                        }
+                                        else if (start.StartsWith("@*", StringComparison.Ordinal))
+                                        {
+                                            terminator = "*@";
+                                        }
+                                        else if (start.StartsWith("<#", StringComparison.Ordinal))
+                                        {
+                                            terminator = "#>";
+                                        }
+                                        else if (start.StartsWith("<!--", StringComparison.Ordinal))
+                                        {
+                                            terminator = "-->";
+                                        }
+
+                                        var terminatorIndex = line.IndexOf(terminator, tokenEndIndex, StringComparison.Ordinal);
+                                        if (terminatorIndex == -1)
+                                        {
+                                            found = true;
+                                            message = line.Substring(tokenEndIndex);
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            found = true;
+                                            message = line.Substring(tokenEndIndex, terminatorIndex - tokenEndIndex);
+                                            break;
+                                        }
                                     }
                                 }
 
                                 if (string.IsNullOrEmpty(message))
                                 {
-                                    foreach (Match multiLineMatch in multiLineCommentStartRegex.Matches(prefix))
+                                    foreach (Match singleLineMatch in singleLineCommentRegex.Matches(prefix))
                                     {
-                                        if (string.IsNullOrWhiteSpace(prefix.Substring(multiLineMatch.Index + multiLineMatch.Length)))
+                                        if (string.IsNullOrWhiteSpace(prefix.Substring(singleLineMatch.Index + singleLineMatch.Length)))
                                         {
-                                            string terminator = null;
-                                            switch (multiLineMatch.Groups[1].Value)
-                                            {
-                                                case "/*":
-                                                    terminator = "*/";
-                                                    break;
-
-                                                case "@*":
-                                                    terminator = "*@";
-                                                    break;
-
-                                                case "<#":
-                                                    terminator = "#>";
-                                                    break;
-
-                                                case "<!--":
-                                                    terminator = "-->";
-                                                    break;
-                                            }
-
-                                            var terminatorIndex = line.IndexOf(terminator, tokenEndIndex, StringComparison.Ordinal);
-                                            if (terminatorIndex == -1)
-                                            {
-                                                found = true;
-                                                message = line.Substring(tokenEndIndex);
-                                                break;
-                                            }
-                                            else
-                                            {
-                                                found = true;
-                                                message = line.Substring(tokenEndIndex, terminatorIndex - tokenEndIndex);
-                                                break;
-                                            }
+                                            found = true;
+                                            message = line.Substring(tokenEndIndex);
+                                            break;
                                         }
                                     }
 
