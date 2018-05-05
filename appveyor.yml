@@ -11,8 +11,9 @@ before_build:
   - gitversion /l console /output buildserver
 build:
   project: FixMe.sln
+test_script:
+  - OpenCover.Console.exe -target:"dotnet.exe" -targetargs:"test --configuration %CONFIGURATION% --no-build" -register:user -filter:"+[*]* -[xunit*]*" -output:coverage.xml -oldStyle
 after_test:
-  - OpenCover.Console.exe -target:"dotnet.exe" -targetargs:test -register:user -filter:"+[*]* -[xunit*]*" -output:coverage.xml -oldStyle
   - codecov -X gcov -f "coverage.xml"
 artifacts:
   - path: '**\*.nupkg'
