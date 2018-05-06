@@ -15,9 +15,44 @@ namespace FixMe.Tests
         public static readonly string DefaultTokens = "BUG;FIXME;HACK;UNDONE;NOTE;OPTIMIZE;TODO;WORKAROUND;XXX;UnresolvedMergeConflict";
 
         [Fact]
-        public void Run_WhenFilesWithTokensAreIncluded_CreatesWarningsForTheTokens()
+        public void Execute_WhenFileIsBinary_CreatesMessageForSkippedFile()
         {
-            var testFiles = "test.cmd;test.html;test.js;test.sql";
+            var assemblyPath = Path.GetDirectoryName(typeof(TokenSearchTests).Assembly.Location);
+
+            var subject = new TokenSearch();
+            var filePath = Path.Combine(assemblyPath, "TestCases", "test.gif");
+            subject.Files = new[] { new TaskItem(filePath) };
+            subject.Tokens = Array.ConvertAll(DefaultTokens.Split(';'), token => new TaskItem(token));
+            var engine = new BuildEngine();
+            subject.BuildEngine = engine;
+
+            var result = subject.Execute();
+
+            Assert.True(result);
+            Assert.Collection(engine.Logs,
+                x => Assert.Equal($"Skipping '{filePath}' because it appears to be a binary file.", ((BuildMessageEventArgs)x).Message));
+        }
+
+        [Fact]
+        public void Execute_WhenFileIsNotFound_CreatesMessageForMissingFile()
+        {
+            var subject = new TokenSearch();
+            subject.Files = new[] { new TaskItem("notfound.txt") };
+            subject.Tokens = Array.ConvertAll(DefaultTokens.Split(';'), token => new TaskItem(token));
+            var engine = new BuildEngine();
+            subject.BuildEngine = engine;
+
+            var result = subject.Execute();
+
+            Assert.True(result);
+            Assert.Collection(engine.Logs,
+                x => Assert.Equal("Skipping 'notfound.txt' because it was not found.", ((BuildMessageEventArgs)x).Message));
+        }
+
+        [Fact]
+        public void Execute_WhenFilesWithTokensAreIncluded_CreatesWarningsForTheTokens()
+        {
+            var testFiles = "test.cmd;test.cshtml;test.js;test.sql";
             var assemblyPath = Path.GetDirectoryName(typeof(TokenSearchTests).Assembly.Location);
 
             var subject = new TokenSearch();
@@ -32,6 +67,7 @@ namespace FixMe.Tests
             Assert.Collection(engine.Logs,
                 x => Assert.Equal("Found 'TODO': Change to the path of your project", ((BuildWarningEventArgs)x).Message),
                 x => Assert.Equal("Found 'WORKAROUND': Include this CSS inline.", ((BuildWarningEventArgs)x).Message),
+                x => Assert.Equal("Found 'NOTE': This should be uncommented after the year 1,000,000½.", ((BuildWarningEventArgs)x).Message),
                 x => Assert.Equal("Found 'UNDONE': Test", ((BuildWarningEventArgs)x).Message),
                 x => Assert.Equal("Found 'BUG': This is a bug.", ((BuildWarningEventArgs)x).Message),
                 x => Assert.Equal("Found 'FIXME': This breaks if you don't have DBO permissions", ((BuildWarningEventArgs)x).Message));
