@@ -12,7 +12,7 @@ before_build:
 build:
   project: FixMe.sln
 test_script:
-  - OpenCover.Console.exe -target:"dotnet.exe" -targetargs:"test --configuration %CONFIGURATION% --no-build" -register:user -filter:"+[*]* -[xunit*]*" -output:coverage.xml -oldStyle
+  - OpenCover.Console.exe -target:dotnet.exe "-targetargs:test ""FixMe.Tests\FixMe.Tests.csproj"" --configuration %CONFIGURATION% --no-build" -register:user -filter:"+[*]* -[xunit*]*" -output:coverage.xml -oldStyle
 after_test:
   - codecov -X gcov -f "coverage.xml"
 artifacts:
