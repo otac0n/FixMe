@@ -11,6 +11,7 @@
     <DevelopmentDependency>true</DevelopmentDependency>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DebugType>Full</DebugType>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <MinClientVersion>2.5</MinClientVersion>
