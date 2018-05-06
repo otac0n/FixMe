@@ -5,18 +5,17 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <CodeAnalysisRuleSet>FixMe.ruleset</CodeAnalysisRuleSet>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <Description>A utility to emit MSBuild warnings for FIXME-style comments.</Description>
-    <PackageLicenseUrl>https://raw.github.com/otac0n/FixMe/master/license.md</PackageLicenseUrl>
+    <DebugType>Full</DebugType>
     <PackageTags>build;todo;fixme;warn;bug;xxx</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <DebugType>Full</DebugType>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <MinClientVersion>2.5</MinClientVersion>
-    <NeutralLanguage>en-US</NeutralLanguage>
     <TargetFrameworks>net40;netstandard2.0</TargetFrameworks>
+    <Description>A utility to emit MSBuild warnings for FIXME-style comments.</Description>
+    <PackageLicenseUrl>https://raw.github.com/otac0n/FixMe/master/license.md</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/otac0n/FixMe</PackageProjectUrl>
   </PropertyGroup>
   <ItemGroup>
